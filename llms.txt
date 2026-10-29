@@ -1,0 +1,59 @@
+# GroupDocs.Editor MCP Server
+
+MCP server for GroupDocs.Editor — edit Word, Excel, PowerPoint and PDF via HTML round-trip with AI agents. Replace text without losing formatting, turn a document (or one worksheet, slide or PDF page range) into editable HTML and save it back to DOCX, XLSX, PPTX, PDF, TXT, Markdown or EPUB, and fill Word form fields — locally, documents never leave the machine.
+
+## Install
+
+- dnx (recommended): dnx GroupDocs.Editor.Mcp --yes   (pin: GroupDocs.Editor.Mcp@26.10.0)
+- Docker: docker run --rm -i -v "$(pwd)/documents:/data" ghcr.io/groupdocs-editor/editor-net-mcp:latest   (Linux hosts: add --user "$(id -u):$(id -g)")
+- Global tool: dotnet tool install -g GroupDocs.Editor.Mcp   then   groupdocs-editor-mcp
+- Client key: groupdocs-editor · MCP Registry: io.github.groupdocs-editor/groupdocs-editor-mcp
+
+## MCP tools
+
+- get_document_info — family, format, pages / worksheets / slides, size, encryption and save targets (JSON)
+- extract_html — a document, or one worksheet, slide or PDF page range, as editable HTML saved to storage, with a plain-text preview
+- save_from_html — edited HTML back to DOCX, DOC, RTF, ODT, XLSX, XLS, ODS, CSV, PPTX, PPT, ODP, PDF, XPS, TXT, Markdown, MHTML, EPUB, MOBI, AZW3, EML or MSG; with sourceFile + worksheet/slide it splices one part back into the original
+- replace_text — find and replace that keeps formatting (literal, case-insensitive, whole word, regex); one worksheet or slide at a time; reports the count; writes nothing when nothing matched
+- get_supported_formats — formats GroupDocs.Editor can open and save, per family or for one file (JSON)
+- get_form_fields — Word form fields with type and value (JSON)
+- fill_form_fields — fills Word form fields and saves a filled copy; unknown names are reported
+- get_license_status — licensing mode, metered consumption, engine version
+
+Worksheet, slide and page numbers are 1-based. Failures set isError and start with the tool's prefix, e.g. "HTML extraction failed for 'report.docx': …". Outputs are saved next to the input; existing files are never overwritten.
+
+## Example prompts for AI agents
+
+- Replace "ACME Corp" with "Globex" in contract.docx and keep the formatting.
+- Give me the second worksheet of budget.xlsx as HTML so I can edit it.
+- Save edited.html back as a Word document, and also as a PDF.
+- Fill the form fields in application.docx: name = Jane Doe, agree = yes.
+- Which formats can GroupDocs.Editor open and save?
+
+## Configuration
+
+- GROUPDOCS_MCP_STORAGE_PATH — base folder for input and output (default: current directory)
+- GROUPDOCS_MCP_OUTPUT_PATH — optional separate output folder
+- GROUPDOCS_LICENSE_PATH — GroupDocs licence file; omit for evaluation mode
+- GROUPDOCS_METERED_PUBLIC_KEY / GROUPDOCS_METERED_PRIVATE_KEY — metered (pay-per-use) licensing; needs outbound connectivity; the private key is a secret
+
+## Evaluation mode
+
+Every tool works without a licence. Edited output starts with an evaluation banner, saved workbooks gain an extra worksheet, and only the first 2 PDF pages, worksheets and slides can be edited (a higher number is refused, not silently swapped for part 2). Editing-tool responses then start with an "Evaluation mode:" line.
+
+## Native prerequisites
+
+None beyond fonts: no libgdiplus. Linux needs libfontconfig1 + ttf-mscorefonts-installer for PDF/XPS output; the Docker image bundles them.
+
+## Limits
+
+- replace_text matches within one formatting run; use extract_html + save_from_html for phrases split across formatting.
+- PDF editing converts to flowing HTML and back; complex layouts do not round-trip perfectly.
+- PPTX and email outputs need the original as sourceFile.
+
+## Links
+
+- Source: https://github.com/groupdocs-editor/GroupDocs.Editor.Mcp
+- Tests and how-to guides: https://github.com/groupdocs-editor/GroupDocs.Editor.Mcp.Tests
+- NuGet: https://www.nuget.org/packages/GroupDocs.Editor.Mcp
+- Product: https://products.groupdocs.com/editor/net/
