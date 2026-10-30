@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "groupdocs-editor": {
+      "type": "stdio",
+      "command": "dnx",
+      "args": ["GroupDocs.Editor.Mcp", "--yes"],
+      "env": {
+        "GROUPDOCS_MCP_STORAGE_PATH": "/path/to/documents",
+        "GROUPDOCS_MCP_OUTPUT_PATH": "/path/to/documents",
+        "GROUPDOCS_LICENSE_PATH": ""
+      }
+    }
+  }
+}
