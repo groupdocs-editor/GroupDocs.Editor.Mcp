@@ -1,0 +1,71 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>GroupDocs.Editor.Mcp</PackageId>
+    <Version>$(GroupDocsEditorMcp)</Version>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>MCP server for GroupDocs.Editor — edit Word, Excel, PowerPoint and PDF via HTML round-trip with AI agents. Replace text without losing formatting, turn a document (or one worksheet, slide or PDF page range) into editable HTML and save it back to DOCX, XLSX, PPTX, PDF, TXT, Markdown or EPUB, and fill Word form fields — locally, documents never leave the machine. Exposes GetDocumentInfo, ExtractHtml, SaveFromHtml, ReplaceText, GetSupportedFormats, GetFormFields and FillFormFields to AI agents.</Description>
+    <PackageTags>groupdocs;editor;mcp;model-context-protocol;mcp-server;dotnet-tool;ai;document-editing;docx-editing;html-round-trip</PackageTags>
+    <PackageIcon>images\icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IsPackable>true</IsPackable>
+    <!-- Package as a .NET tool so the nupkg gets the required tools/ layout
+         for `dnx` / `dotnet tool install` invocation. -->
+    <PackAsTool>true</PackAsTool>
+    <!-- Mark as MCP server for NuGet.org discovery (packagetype=McpServer filter).
+         NOTE: correct MSBuild property is singular <PackageType>; the plural form is ignored. -->
+    <PackageType>McpServer</PackageType>
+    <!-- CLI tool name for dnx / dotnet tool install invocation -->
+    <ToolCommandName>groupdocs-editor-mcp</ToolCommandName>
+  </PropertyGroup>
+
+  <!-- Strip native debug symbols (libSkiaSharp.pdb on the win-* RIDs, ~80 MB each) from the
+       published tools/ output BEFORE pack collects it, keeping the nupkg far from NuGet.org's
+       250 MB hard limit. The managed PDB is preserved; native frames cannot be symbolised in
+       production anyway. <CopyDebugSymbolFilesFromPackages>false does NOT cover this path —
+       runtimes/<rid>/native/*.pdb reach the publish output via a separate runtime-asset path. -->
+  <Target Name="StripNativeRuntimePdbs" AfterTargets="Publish">
+    <ItemGroup>
+      <_NativeRuntimePdbs Include="$(PublishDir)runtimes/**/*.pdb" />
+    </ItemGroup>
+    <Delete Files="@(_NativeRuntimePdbs)" />
+    <Message
+      Text="StripNativeRuntimePdbs: removed @(_NativeRuntimePdbs->Count()) native PDB file(s) from publish output to keep the nupkg under NuGet.org's 250 MB limit."
+      Importance="high"
+      Condition="@(_NativeRuntimePdbs->Count()) > 0" />
+  </Target>
+
+  <ItemGroup>
+    <None Include="..\..\assets\icon.png" Pack="true" Visible="false" PackagePath="images\icon.png" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="/" />
+    <!-- server.json — read by NuGet.org to generate mcp.json snippets on the package page -->
+    <None Include=".mcp\server.json" Pack="true" PackagePath=".mcp/server.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Core infrastructure — NuGet packages from groupdocs-mcp-core -->
+    <PackageReference Include="GroupDocs.Mcp.Core" Version="$(GroupDocsMcpCore)" />
+    <PackageReference Include="GroupDocs.Mcp.Local.Storage" Version="$(GroupDocsMcpCore)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GroupDocs.Editor" Version="$(GroupDocsEditor)" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="$(MicrosoftExtensionsHosting)" />
+    <PackageReference Include="ModelContextProtocol" Version="$(ModelContextProtocol)" />
+    <!-- Overrides the engine's vulnerable transitive 8.0.0; see build/dependencies.props. -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="$(SystemSecurityCryptographyPkcs)" />
+  </ItemGroup>
+
+  <!-- No System.Drawing.EnableUnixSupport and no manual SkiaSharp reference: GroupDocs.Editor 26.6.1
+       draws through Aspose.Drawing.Common (managed) and declares SkiaSharp +
+       SkiaSharp.NativeAssets.Linux.NoDependencies itself, so nothing here touches libgdiplus.
+       The Docker image and the Tests CI install fonts only (needed for PDF/XPS output). -->
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="GroupDocs.Editor.Mcp.Tests" />
+  </ItemGroup>
+
+</Project>
